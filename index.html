@@ -84,6 +84,38 @@ h1 {
     border-radius: 5px;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
+
+.cup.disabled {
+    pointer-events: none; /* Отключает клики на стакан */
+    opacity: 0.7; /* Немного затемняет стакан */
+}
+.cup.peek .ball {
+    display: block !important; /* Показываем шарик, если у стакана есть класс peek */
+}
+
+#show-balls-button {
+    padding: 10px 20px;
+    font-size: 1.2em;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 30px;
+}
+
+#show-balls-button:hover {
+    background-color: #0B79D0;
+}
+#best-score {
+    color: #00ff00; /* Зеленый цвет */
+    font-size: 1.4em;
+    margin-top: 10px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
     </style>
 </head>
 <body>
@@ -92,7 +124,7 @@ h1 {
 
     <div class="game-container">
         <div class="cup" data-cup="1">
-            <div class="ball"></div>
+
         </div>
         <div class="cup" data-cup="2"></div>
         <div class="cup" data-cup="3"></div>
@@ -101,54 +133,134 @@ h1 {
     <button id="shuffle-button">Перемешать!</button>
     <p id="message"></p>
  <p id="correct-guesses">Правильных подряд: 0</p>
+ <p id="best-score">Лучший результат: 0</p>
     <script>
  document.addEventListener('DOMContentLoaded', () => {
     const cups = document.querySelectorAll('.cup');
     const shuffleButton = document.getElementById('shuffle-button');
     const message = document.getElementById('message');
+    const bestScoreDisplay = document.getElementById('best-score');
 
-    let ballPosition = 1; // Начальная позиция шарика
+
+    let ballPositions = []; // Массив позиций шариков
     let correctGuesses = 0; // Счетчик правильных ответов подряд
+    let gameActive = true; // Флаг, показывающий, активна ли игра
+    const numberOfBalls = 2; // Количество шариков
+    let guessedCups = []; // Массив стаканов, в которых уже угадали
+
+      // Загружаем лучший результат из localStorage при загрузке страницы
+    let bestScore = localStorage.getItem('bestScore') || 0;
+    updateBestScoreDisplay();
+
 
     function resetCups() {
         cups.forEach(cup => {
             cup.innerHTML = ''; // Очищаем стаканы
+            cup.classList.remove('disabled'); // Убираем класс disabled
+            cup.classList.remove('peek'); // Убираем класс peek
         });
+        guessedCups = []; // Сбрасываем массив угаданных стаканов
     }
 
-    function placeBall(cupNumber) { // Функция теперь принимает номер стакана
-        const cupWithBall = document.querySelector(`.cup[data-cup="${cupNumber}"]`); // Используем переданный номер
-        const ball = document.createElement('div');
-        ball.classList.add('ball');
-        cupWithBall.appendChild(ball);
+   function placeBalls() {
+        // Создаем массив случайных позиций для шариков (без дубликатов)
+        ballPositions = [];
+        while (ballPositions.length < numberOfBalls) {
+            const randomPosition = Math.floor(Math.random() * 3) + 1;
+            if (!ballPositions.includes(randomPosition)) {
+                ballPositions.push(randomPosition);
+            }
+        }
+
+        // Размещаем шарики в выбранных стаканах
+        ballPositions.forEach(position => {
+            const cupWithBall = document.querySelector(`.cup[data-cup="${position}"]`);
+            const ball = document.createElement('div');
+            ball.classList.add('ball');
+            ball.style.display = 'none'; // Скрываем шарик изначально
+            cupWithBall.appendChild(ball);
+        });
     }
 
     function shuffleCups() {
         resetCups();
         message.textContent = ''; // Очищаем сообщение
-        ballPosition = Math.floor(Math.random() * 3) + 1; // Случайная позиция шарика (1, 2 или 3)
+        placeBalls(); // Размещаем шарики
         updateCorrectGuessesDisplay(); // Сбрасываем счетчик на экране при перемешивании
+        gameActive = true; // Игра снова активна после перемешивания
     }
 
     function checkGuess(cupNumber) {
-        if (cupNumber === ballPosition) {
-            message.textContent = 'Поздравляю! Вы угадали!';
-            correctGuesses++; // Увеличиваем счетчик
-        } else {
-            message.textContent = 'Не угадали! Попробуйте еще раз.';
-            correctGuesses = 0; // Сбрасываем счетчик
+        if (!gameActive) {
+            return;
         }
-         placeBall(ballPosition); // Показываем, где был шарик
-         updateCorrectGuessesDisplay(); // Обновляем отображение счетчика
+        if (guessedCups.includes(cupNumber)) {
+            message.textContent = "Вы уже угадали этот стакан!";
+            return;
+        }
+
+        let hasBall = ballPositions.includes(cupNumber);
+
+        if (hasBall) {
+            message.textContent = "Поздравляю! Вы угадали!";
+            correctGuesses++;
+            guessedCups.push(cupNumber);
+
+            updateCorrectGuessesDisplay();
+
+             ballPositions.forEach(position => {
+            const cupWithBall = document.querySelector(`.cup[data-cup="${position}"]`);
+            cupWithBall.classList.add('peek');
+        });
+         cups.forEach(cup => {
+                    cup.classList.add('disabled');
+                });
+            // Если угадали, то показываем на 1.5 секунды
+            setTimeout(() => {
+                shuffleCups(); // Затем перемешиваем
+                 cups.forEach(cup => {
+                    cup.classList.remove('disabled');
+                });
+            }, 1500);
+
+
+        } else {
+            message.textContent = "Не угадали! Попробуйте еще раз.";
+              ballPositions.forEach(position => {
+            const cupWithBall = document.querySelector(`.cup[data-cup="${position}"]`);
+            cupWithBall.classList.add('peek');
+        });
+
+            if (correctGuesses > bestScore) {
+                bestScore = correctGuesses;
+                localStorage.setItem('bestScore', bestScore);
+                updateBestScoreDisplay();
+            }
+            correctGuesses = 0;
+
+            updateCorrectGuessesDisplay();
+
+        }
+        guessedCups = [];
+
+
     }
+
     function updateCorrectGuessesDisplay() {
         document.getElementById('correct-guesses').textContent = `Правильных подряд: ${correctGuesses}`;
     }
+        function updateBestScoreDisplay() {
+        bestScoreDisplay.textContent = `Лучший результат: ${bestScore}`;
+    }
+
 
     cups.forEach(cup => {
         cup.addEventListener('click', () => {
             const cupNumber = parseInt(cup.dataset.cup);
-            resetCups();
+            //cups.forEach(cup => {
+            //        cup.classList.remove('disabled');
+            //     cup.classList.remove('peek');
+            //    });
             checkGuess(cupNumber);
 
         });
