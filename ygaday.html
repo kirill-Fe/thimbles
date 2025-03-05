@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Угадай, где шарик!</title>
+    <link rel="shortcut icon" href="icon.png" type="image/x-icon">
+    <style>
+        body {
+    font-family: sans-serif;
+    text-align: center;
+    background-color: #000000;
+}
+
+h1 {
+    color: #b0b0b0;
+}
+
+.game-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 50px;
+}
+
+.cup {
+    width: 100px;
+    height: 120px;
+    background-color: #5c5c5c;
+    border: 2px solid #b4b4b4;
+    border-radius: 20px 20px 0 0;
+    margin: 20px;
+    position: relative;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.cup:after { /* "дно" стаканчика */
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    background-color: #5c5c5c;
+}
+
+.ball {
+    width: 30px;
+    height: 30px;
+    background-color: red;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+#shuffle-button {
+    padding: 10px 20px;
+    font-size: 1.2em;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 30px;
+}
+
+#shuffle-button:hover {
+    background-color: #388E3C;
+}
+
+#message {
+    margin-top: 20px;
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #b0b0b0;
+}
+#correct-guesses {
+    color: #ffff00; /* Желтый цвет */
+    font-size: 1.4em;
+    margin-top: 10px;
+    padding: 5px 10px;
+    border-radius: 5px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+    </style>
+</head>
+<body>
+
+    <h1>Угадай, где шарик!</h1>
+
+    <div class="game-container">
+        <div class="cup" data-cup="1">
+            <div class="ball"></div>
+        </div>
+        <div class="cup" data-cup="2"></div>
+        <div class="cup" data-cup="3"></div>
+    </div>
+
+    <button id="shuffle-button">Перемешать!</button>
+    <p id="message"></p>
+ <p id="correct-guesses">Правильных подряд: 0</p>
+    <script>
+ document.addEventListener('DOMContentLoaded', () => {
+    const cups = document.querySelectorAll('.cup');
+    const shuffleButton = document.getElementById('shuffle-button');
+    const message = document.getElementById('message');
+
+    let ballPosition = 1; // Начальная позиция шарика
+    let correctGuesses = 0; // Счетчик правильных ответов подряд
+
+    function resetCups() {
+        cups.forEach(cup => {
+            cup.innerHTML = ''; // Очищаем стаканы
+        });
+    }
+
+    function placeBall(cupNumber) { // Функция теперь принимает номер стакана
+        const cupWithBall = document.querySelector(`.cup[data-cup="${cupNumber}"]`); // Используем переданный номер
+        const ball = document.createElement('div');
+        ball.classList.add('ball');
+        cupWithBall.appendChild(ball);
+    }
+
+    function shuffleCups() {
+        resetCups();
+        message.textContent = ''; // Очищаем сообщение
+        ballPosition = Math.floor(Math.random() * 3) + 1; // Случайная позиция шарика (1, 2 или 3)
+        updateCorrectGuessesDisplay(); // Сбрасываем счетчик на экране при перемешивании
+    }
+
+    function checkGuess(cupNumber) {
+        if (cupNumber === ballPosition) {
+            message.textContent = 'Поздравляю! Вы угадали!';
+            correctGuesses++; // Увеличиваем счетчик
+        } else {
+            message.textContent = 'Не угадали! Попробуйте еще раз.';
+            correctGuesses = 0; // Сбрасываем счетчик
+        }
+         placeBall(ballPosition); // Показываем, где был шарик
+         updateCorrectGuessesDisplay(); // Обновляем отображение счетчика
+    }
+    function updateCorrectGuessesDisplay() {
+        document.getElementById('correct-guesses').textContent = `Правильных подряд: ${correctGuesses}`;
+    }
+
+    cups.forEach(cup => {
+        cup.addEventListener('click', () => {
+            const cupNumber = parseInt(cup.dataset.cup);
+            resetCups();
+            checkGuess(cupNumber);
+
+        });
+    });
+
+    shuffleButton.addEventListener('click', shuffleCups);
+
+    // Инициализация игры при загрузке страницы
+    shuffleCups();
+});
+    </script>
+</body>
+</html>
