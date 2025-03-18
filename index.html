@@ -20,17 +20,17 @@ h1 {
     display: flex;
     justify-content: center;
     margin-top: 50px;
-    pointer-events: auto; /* Разрешаем клики по умолчанию */
+    pointer-events: auto; 
 }
 
 .game-container.disabled {
-    pointer-events: none; /* Отключаем клики, когда нужно */
-    opacity: 0.7; /* Дополнительно затемняем */
+    pointer-events: none;
+    opacity: 0.7;
 }
 
 
 .cup {
-    -webkit-tap-highlight-color: rgba(0, 0, 0, 0); /* Прозрачная подсветка для стаканов */
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0); 
     width: 100px;
     height: 120px;
     background-color: #5c5c5c;
@@ -42,7 +42,7 @@ h1 {
     overflow: hidden;
 }
 
-.cup:after { /* "дно" стаканчика */
+.cup:after {
     content: '';
     position: absolute;
     bottom: 0;
@@ -85,7 +85,7 @@ h1 {
     color: #b0b0b0;
 }
 #correct-guesses {
-    color: #ffff00; /* Желтый цвет */
+    color: #ffff00; 
     font-size: 1.4em;
     margin-top: 10px;
     padding: 5px 10px;
@@ -94,11 +94,11 @@ h1 {
 }
 
 .cup.disabled {
-    pointer-events: none; /* Отключает клики на стакан */
-    opacity: 0.7; /* Немного затемняет стакан */
+    pointer-events: none;
+    opacity: 0.7;
 }
 .cup.peek .ball {
-    display: block !important; /* Показываем шарик, если у стакана есть класс peek */
+    display: block !important; 
 }
 
 #show-balls-button {
@@ -116,7 +116,7 @@ h1 {
     background-color: #0B79D0;
 }
 #best-score {
-    color: #00ff00; /* Зеленый цвет */
+    color: #00ff00; 
     font-size: 1.4em;
     margin-top: 10px;
     padding: 5px 10px;
@@ -124,20 +124,20 @@ h1 {
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
  .projects-button {
-  display: inline-block; /* Чтобы кнопка занимала только необходимую ширину */
-  padding: 10px 20px; /* Отступы внутри кнопки */
-  font-size: 1.2em; /* Размер шрифта */
-  background-color: #007BFF; /* Цвет фона */
-  color: white; /* Цвет текста */
-  border: none; /* Убираем рамку */
-  border-radius: 5px; /* Скругленные углы */
-  cursor: pointer; /* Изменяем курсор при наведении */
-  text-decoration: none; /* Убираем подчеркивание у ссылки */
-  margin-top: 20px; /* Отступ сверху */
+  display: inline-block; 
+  padding: 10px 20px; 
+  font-size: 1.2em; 
+  background-color: #007BFF; 
+  color: white;
+  border: none; 
+  border-radius: 5px; 
+  cursor: pointer; 
+  text-decoration: none;
+  margin-top: 20px; 
 }
 
 .projects-button:hover {
-  background-color: #0056b3; /* Цвет фона при наведении */
+  background-color: #0056b3; 
 }
 
 #reset-button {
@@ -183,28 +183,27 @@ h1 {
     const bestScoreDisplay = document.getElementById('best-score');
     const gameContainer = document.querySelector('.game-container');
 
-    let ballPositions = []; // Массив позиций шариков
-    let correctGuesses = 0; // Счетчик правильных ответов подряд
-    let gameActive = true; // Флаг, показывающий, активна ли игра
-    const numberOfBalls = 2; // Количество шариков
-    let guessedCups = []; // Массив стаканов, в которых уже угадали
+    let ballPositions = [];
+    let correctGuesses = 0; 
+    let gameActive = true; 
+    const numberOfBalls = 2; 
+    let guessedCups = []; 
 
-      // Загружаем лучший результат из localStorage при загрузке страницы
+     
     let bestScore = localStorage.getItem('bestScore') || 0;
     updateBestScoreDisplay();
 
 
     function resetCups() {
         cups.forEach(cup => {
-            cup.innerHTML = ''; // Очищаем стаканы
-            cup.classList.remove('disabled'); // Убираем класс disabled
-            cup.classList.remove('peek'); // Убираем класс peek
+            cup.innerHTML = ''; 
+            cup.classList.remove('disabled'); 
+            cup.classList.remove('peek'); 
         });
-        guessedCups = []; // Сбрасываем массив угаданных стаканов
+        guessedCups = [];
     }
 
    function placeBalls() {
-        // Создаем массив случайных позиций для шариков (без дубликатов)
         ballPositions = [];
         while (ballPositions.length < numberOfBalls) {
             const randomPosition = Math.floor(Math.random() * 3) + 1;
@@ -213,30 +212,29 @@ h1 {
             }
         }
 
-        // Размещаем шарики в выбранных стаканах
         ballPositions.forEach(position => {
             const cupWithBall = document.querySelector(`.cup[data-cup="${position}"]`);
             const ball = document.createElement('div');
             ball.classList.add('ball');
-            ball.style.display = 'none'; // Скрываем шарик изначально
+            ball.style.display = 'none'; 
             cupWithBall.appendChild(ball);
         });
     }
 
    function shuffleCups() {
         resetCups();
-        message.textContent = ''; // Очищаем сообщение
-        placeBalls(); // Размещаем шарики
-        updateCorrectGuessesDisplay(); // Сбрасываем счетчик на экране при перемешивании
-        gameActive = true; // Игра снова активна после перемешивания
-        enableGameContainer(); // Разрешаем клики на стаканы
+        message.textContent = '';
+        placeBalls();
+        updateCorrectGuessesDisplay();
+        gameActive = true; 
+        enableGameContainer();
     }
 
     function resetGame() {
-    localStorage.setItem('bestScore', 0); // Сбрасываем лучший результат в localStorage
-    bestScore = 0; // Сбрасываем bestScore в JavaScript
-    updateBestScoreDisplay(); // Обновляем отображение лучшего результата
-    correctGuesses = 0; // Сбрасываем количество правильных подряд
+    localStorage.setItem('bestScore', 0);
+    bestScore = 0; 
+    updateBestScoreDisplay(); 
+    correctGuesses = 0;
     updateCorrectGuessesDisplay();
 
     shuffleCups();
@@ -268,7 +266,7 @@ h1 {
 
 
             setTimeout(() => {
-                shuffleCups(); // Затем перемешиваем
+                shuffleCups();
              enableGameContainer();
             }, 1500);
 
@@ -324,7 +322,6 @@ h1 {
     shuffleButton.addEventListener('click', shuffleCups);
       resetButton.addEventListener('click', resetGame);
 
-    // Инициализация игры при загрузке страницы
     shuffleCups();
 });
     </script>
