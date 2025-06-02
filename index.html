@@ -154,6 +154,58 @@ h1 {
 #reset-button:hover {
     background-color: #d32f2f;
 }
+#currency {
+    color: #b0b0b0;
+    font-size: 1.4em;
+    margin-top: 10px;
+}
+#watch-ad-button {
+    padding: 10px 20px;
+    font-size: 1.2em;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+#watch-ad-button:hover {
+    background-color: #0B79D0;
+}
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.8); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+    position: relative;
+}
+
+.close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 10px;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: red;
+}
 
     </style>
 </head>
@@ -174,6 +226,19 @@ h1 {
     <p id="message"></p>
  <p id="correct-guesses">Правильных подряд: 0</p>
  <p id="best-score">Лучший результат: 0</p>
+ <p id="currency">Валюта: <span id="currency-amount">0</span></p>
+ <button id="watch-ad-button">Смотреть рекламу</button>
+
+<!-- Modal -->
+<div id="adModal" class="modal">
+    <div class="modal-content">
+        <span class="close" id="closeModal">&times;</span>
+        <p>Видео реклама</p>
+        <!--  Здесь будет отображаться видео, если у вас есть ссылка на видео  -->
+        <p>Реклама закроется через <span id="timer">3</span> секунд</p>
+    </div>
+</div>
+
     <script>
  document.addEventListener('DOMContentLoaded', () => {
     const cups = document.querySelectorAll('.cup');
@@ -182,6 +247,11 @@ h1 {
     const message = document.getElementById('message');
     const bestScoreDisplay = document.getElementById('best-score');
     const gameContainer = document.querySelector('.game-container');
+    const currencyAmountDisplay = document.getElementById('currency-amount');
+    const watchAdButton = document.getElementById('watch-ad-button');
+    const adModal = document.getElementById('adModal');
+    const closeModal = document.getElementById('closeModal');
+    const timerDisplay = document.getElementById('timer');
 
     let ballPositions = [];
     let correctGuesses = 0; 
@@ -189,9 +259,18 @@ h1 {
     const numberOfBalls = 2; 
     let guessedCups = []; 
 
+    // Game Currency
+    let currency = parseInt(localStorage.getItem('currency')) || 0;
+    updateCurrencyDisplay();
+
      
     let bestScore = localStorage.getItem('bestScore') || 0;
     updateBestScoreDisplay();
+
+    // Ad Timer
+    let adTimerEnd = localStorage.getItem('adTimerEnd') ? parseInt(localStorage.getItem('adTimerEnd')) : 0;
+    let canWatchAd = true;
+    updateAdButton();
 
 
     function resetCups() {
@@ -255,6 +334,12 @@ h1 {
             message.textContent = "Поздравляю! Вы угадали!";
             correctGuesses++;
             guessedCups.push(cupNumber);
+            
+            // Give currency
+            let currencyToAdd = 2 * (parseInt(localStorage.getItem('currencyForGuess')) || 1);  // x2 от ставки
+            currency += currencyToAdd;
+            localStorage.setItem('currency', currency);
+            updateCurrencyDisplay();
 
             updateCorrectGuessesDisplay();
 
@@ -309,20 +394,83 @@ h1 {
         bestScoreDisplay.textContent = `Лучший результат: ${bestScore}`;
     }
 
+    function updateCurrencyDisplay() {
+        currencyAmountDisplay.textContent = currency;
+    }
+
+
+    function startAdTimer() {
+        const now = Math.floor(Date.now() / 1000);
+        adTimerEnd = now + 180; // 3 минуты
+        localStorage.setItem('adTimerEnd', adTimerEnd);
+        updateAdButton();
+    }
+
+    function updateAdButton() {
+        const now = Math.floor(Date.now() / 1000);
+        if (adTimerEnd > now) {
+            canWatchAd = false;
+            const timeLeft = adTimerEnd - now;
+            watchAdButton.textContent = `Смотреть рекламу (через ${timeLeft}с)`;
+            watchAdButton.disabled = true;
+            setTimeout(updateAdButton, 1000);
+        } else {
+            canWatchAd = true;
+            watchAdButton.textContent = "Смотреть рекламу";
+            watchAdButton.disabled = false;
+        }
+    }
+
+    watchAdButton.addEventListener('click', () => {
+        if (canWatchAd) {
+            adModal.style.display = "block";
+            // Implement your ad here.  For example:  display a video.
+            startAdTimer();
+            let secondsLeft = 3;
+            timerDisplay.textContent = secondsLeft;
+
+            const timerInterval = setInterval(() => {
+                secondsLeft--;
+                timerDisplay.textContent = secondsLeft;
+                if (secondsLeft <= 0) {
+                    clearInterval(timerInterval);
+                    closeAdModal();
+                }
+            }, 1000);
+        }
+    });
+
+    closeModal.addEventListener('click', closeAdModal);
+
+    function closeAdModal() {
+        adModal.style.display = "none";
+        // Give currency
+        currency += 1000;
+        localStorage.setItem('currency', currency);
+        updateCurrencyDisplay();
+    }
+
+    window.addEventListener('click', (event) => {
+        if (event.target == adModal) {
+            closeAdModal();
+        }
+    });
+
 
     cups.forEach(cup => {
         cup.addEventListener('click', () => {
-            const cupNumber = parseInt(cup.dataset.cup);
-
-            checkGuess(cupNumber);
-
+            if (gameActive) { // Добавлено условие, чтобы игра не реагировала, если не активна
+                const cupNumber = parseInt(cup.dataset.cup);
+                checkGuess(cupNumber);
+            }
         });
     });
 
     shuffleButton.addEventListener('click', shuffleCups);
-      resetButton.addEventListener('click', resetGame);
+    resetButton.addEventListener('click', resetGame);
 
     shuffleCups();
+    updateAdButton();
 });
     </script>
 </body>
